@@ -1,3 +1,3 @@
-# RoundRobinSchedulingAlgorithm
-Algorithm for generating round robin scheduling for sports teams
-This algorithm is for generating round robin schedules for sports teams. You identify how many teams, how many weeks, and then run the program to generate a schedule that can be seen either on a team by team basis or for seeing all teams. 
+# Sport Team Schedule Generator
+
+This program creates a schedule for sports teams. You identify how many teams, how many weeks, and you can select either round robin or double round robin for the scheduling format. Round Robin means that every team plays every other team in the league once, Double Round Robin means teams play every other team, on the road and at home. You type in the number of teams, the number of weeks in the season, the schedule type, and then generate the schedule. You can review the schedule once it has generated, and you can export the data - the data will show up in a tkinter text box so you can copy/paste that data whenever you need to.  
