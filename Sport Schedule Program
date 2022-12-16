@@ -1,0 +1,274 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+import random
+
+class Team(object):
+    def __init__(self,name,schedule,numberofhomegames,numberofroadgames,numberofopenweeks,frame):
+        self.name = name
+        self.schedule = []
+        self.numberofhomegames = numberofhomegames
+        self.numberofroadgames = numberofroadgames
+        self.numberofopenweeks = numberofopenweeks
+        self.frame = frame
+
+    def __repr__(self):
+        return self.name
+    def set_frame(self,fr):
+        self.frame = fr
+    
+    def show_schedule_by_team(self):
+        for child in self.frame.winfo_children():
+            child.destroy()
+        newlabel = tk.Label(self.frame)
+        newlabel.config(text=("\n".join(str.split(repr(self.schedule),",")))) 
+        newlabel.grid(row=0,column=0,sticky="nsew")
+
+class Week(object):
+    def __init__(self,weeknumber,matchups,frame):
+        self.weeknumber = weeknumber
+        self.matchups = []
+        self.frame = frame
+
+    def __repr__(self):
+        return "{}: {}".format(self.weeknumber, self.matchups)
+
+    def show_weeks_matchups(self):
+        for child in self.frame.winfo_children():
+            child.destroy()
+        newlabel = tk.Label(self.frame)
+        newlabel.config(text=("\n".join(str.split(repr(self.matchups),",")))) 
+        newlabel.grid(row=0,column=0,sticky="nsew")
+
+    def set_frame(self,fr):
+        self.frame = fr
+    
+    
+class Game(object):
+    def __init__(self,visitor,host,week,possibleweeks):
+        self.visitor = visitor
+        self.host = host
+        self.week = week
+        self.possibleweeks = []
+    
+    def __repr__(self):
+        return "{} vs {}".format(self.visitor,self.host)
+    def identify_possible_weeks(self):
+        self.possibleweeks = [wk for wk in range(len(self.visitor.schedule)) if self.visitor.schedule[wk] == "Open" and self.host.schedule[wk] == "Open"]
+
+
+class Season(object):
+    def __init__(self,NumberofTeamsEntry,NumberofWeeksEntry,ScheduleFormat,TeamList,WeekList,NumberofTeams,NumberofWeeks,MatchupList,Directory):
+        self.NumberofTeamsEntry = NumberofTeamsEntry
+        self.NumberofWeeksEntry = NumberofWeeksEntry
+        self.ScheduleFormat = ScheduleFormat
+        self.TeamList = []
+        self.WeekList = []
+        self.NumberofTeams = NumberofTeams
+        self.NumberofWeeks = NumberofWeeks
+        self.MatchupList = []
+        self.Directory = Directory
+        
+    def __repr__(self):
+        pass
+        
+    def Reset_Schedule(self):
+        for x in self.TeamList:
+            for y in range(len(x.schedule)):
+                x.schedule[y] = "Open"
+        for z in self.WeekList:
+            z.matchups.clear()
+        for a in self.MatchupList:
+            a.week = None
+            a.possibleweeks.clear()
+
+    def Error_Message(self,reason):
+        messagebox.showerror("Error - Information Missing",reason)
+
+    def Set_Matchup(self,Match,Week):
+        Match.week = Week
+        Match.visitor.schedule[Week] = "@ {}".format(Match.host)
+        Match.host.schedule[Week] = " {}".format(Match.visitor)
+        self.WeekList[Week].matchups.append(Match)
+
+    def Show_Schedule_by_Teams(self):
+        newtopwindow = tk.Toplevel()
+        newframe = tk.Frame(newtopwindow,width=600,height=300)
+        newframe.grid(row=0,column=0,sticky="nsew")
+        for tm in self.TeamList:
+            newbutton = tk.Button(newframe,text = tm, command = tm.show_schedule_by_team)
+            newbutton.grid(row=self.TeamList.index(tm),column=0,sticky="nsew")
+        frametoviewteams = tk.Frame(newframe)
+        frametoviewteams.grid(row=0,column=1,rowspan=len(self.TeamList))
+        for g in self.TeamList:
+            g.set_frame(frametoviewteams)
+
+    def Show_Schedule_by_Weeks(self):
+        newtopwindow = tk.Toplevel()
+        newframe = tk.Frame(newtopwindow,width=600,height=300)
+        newframe.grid(row=0,column=0,sticky="nsew")
+        for wk in self.WeekList:
+            newbutton = tk.Button(newframe,text = "Week {}".format(wk.weeknumber), command = wk.show_weeks_matchups)
+            newbutton.grid(row=self.WeekList.index(wk),column=0,sticky="nsew")
+
+        frametoviewmatchups = tk.Frame(newframe)
+        frametoviewmatchups.grid(row=0,column=1,rowspan=len(self.WeekList))
+        for w in self.WeekList:
+            w.set_frame(frametoviewmatchups)
+
+    def Export_Schedule(self):
+        newtopwindow = tk.Toplevel()
+        newframe = tk.Frame(newtopwindow,width=600,height=300)
+        newframe.grid(row=0,column=0,sticky="nsew")
+        tb = tk.Text(newframe)
+        tb.insert(tk.END,"Schedule by Week")
+        for wk in self.WeekList:
+            tb.insert(tk.END,"'\n'{}:".format(wk.weeknumber) )
+            for m in wk.matchups:
+                tb.insert(tk.END, "'\n'" + m.visitor.name + " @ " + m.host.name)
+            tb.insert(tk.END, "'\n'")
+        tb.grid(row=0,column=0,sticky="nsew")
+        tb.insert(tk.END," '\n' Schedule by Team")
+        for tm in self.TeamList:
+            tb.insert(tk.END, "'\n'{}:".format(tm.name) )
+            for i in tm.schedule:
+                tb.insert(tk.END, "'\n'{}".format(i))
+            tb.insert(tk.END, "\n")
+        tb.replace('1.0',tk.END,tb.get('1.0',tk.END).replace("'",''))
+
+
+    def Show_Schedule(self):
+        newtopwindow = tk.Toplevel()
+        newframe = tk.Frame(newtopwindow,width=300,height=300)
+        newframe.grid(row=0,column=0,sticky="nsew")
+        optionlist = tk.Label(newframe,text="Schedule Created. Please Look at Results by Team,Week, or Export Data")
+        optionlist.grid(row=0,column=0,sticky="nsew")
+        showteamoption = tk.Button(newframe,text="Show Schedule by Team",command = self.Show_Schedule_by_Teams)
+        showteamoption.grid(row=1,column=0,sticky="nsew")
+        showteamoption = tk.Button(newframe,text="Show Schedule by Week",command = self.Show_Schedule_by_Weeks)
+        showteamoption.grid(row=2,column=0,sticky="nsew")
+        showteamoption = tk.Button(newframe,text="Export Data",command = self.Export_Schedule)
+        showteamoption.grid(row=3,column=0,sticky="nsew")
+
+    def Set_Schedule(self):
+        schedulecomplete = "N"
+        numberofiterations = 0
+        while schedulecomplete == "N":
+            random.shuffle(self.MatchupList)
+            for match in self.MatchupList:
+                match.identify_possible_weeks()
+            for x in range(len(self.MatchupList)):
+                duplicatelist = [y for y in self.MatchupList if y.week == None]
+                duplicatelist = sorted(duplicatelist,key = lambda h:len(h.possibleweeks))
+                matchuptoset = duplicatelist[0]
+                try:
+                    self.Set_Matchup(matchuptoset,matchuptoset.possibleweeks[0])
+                except:
+                    self.Reset_Schedule()
+                    numberofiterations += 1
+                for gm in self.MatchupList:
+                    gm.possibleweeks.clear()
+                    gm.identify_possible_weeks()
+            finallist = [g for g in self.MatchupList if g.week == None]
+            if len(finallist) > 0:
+                self.Reset_Schedule()
+                numberofiterations += 1
+            else:
+                schedulecomplete = "Y"
+        self.Show_Schedule()
+
+    def Create_Schedule(self):
+        # initialize schedule elements, return with error message if any problems
+        try:
+            self.NumberofWeeks = int(self.NumberofWeeksEntry.get())
+        except:
+            self.Error_Message("Number of Weeks Missing")
+            return
+        try:
+            self.NumberofTeams = int(self.NumberofTeamsEntry.get())
+        except:
+            self.Error_Message("Number of Teams Missing")
+            return
+        if self.NumberofWeeks > 0:
+            for numberofweeksinteger in range(self.NumberofWeeks):
+                newweek = Week("Week {}".format(numberofweeksinteger + 1),None,None)
+                self.WeekList.append(newweek)
+        else:
+            self.Error_Message("Number of Weeks Must Be Higher Than Zero")
+            return
+        if self.NumberofTeams > 0:
+            for teamcreationinteger in range(self.NumberofTeams):
+                newteamname = "Team {}".format(teamcreationinteger + 1)
+                newteam = Team(newteamname,None,0,0,0,None)
+                for wk in range(self.NumberofWeeks):
+                    newteam.schedule.append("Open")
+                    newteam.numberofopenweeks += 1
+                self.TeamList.append(newteam)
+        else:
+            self.Error_Message("Number of Teams Must Be Higher Than Zero")
+            return
+        # run algorithm to create team schedules
+        dictionaryofmatchupscreated = {}
+        if self.ScheduleFormat.get() == "Round Robin":
+            for teaminteamlist in self.TeamList:
+                for teaminteamlist2 in self.TeamList:
+                    if teaminteamlist2 == teaminteamlist:
+                        pass
+                    else:
+                        dictkeyformatchups = "{}{}".format(teaminteamlist,teaminteamlist2)
+                        altdictkeyformatchups = "{}{}".format(teaminteamlist2,teaminteamlist)
+                        if dictkeyformatchups in dictionaryofmatchupscreated or altdictkeyformatchups in dictionaryofmatchupscreated:
+                            pass
+                        else:
+                            if self.TeamList.index(teaminteamlist) % 2 == self.TeamList.index(teaminteamlist2) % 2:
+                                newgame = Game(teaminteamlist2,teaminteamlist,None,None)
+                                dictionaryofmatchupscreated[dictkeyformatchups] = newgame
+                                self.MatchupList.append(newgame)
+                            else:
+                                newgame = Game(teaminteamlist,teaminteamlist2,None,None)
+                                dictionaryofmatchupscreated[altdictkeyformatchups] = newgame
+                                self.MatchupList.append(newgame)
+
+
+        elif self.ScheduleFormat.get() == "Double Round Robin":
+            for teaminteamlist in self.TeamList:
+                for teaminteamlist2 in self.TeamList:
+                    if teaminteamlist2 == teaminteamlist:
+                        pass
+                    else:
+                        dictkeyformatchups = "{}{}".format(teaminteamlist,teaminteamlist2)
+                        altdictkeyformatchups = "{}{}".format(teaminteamlist2,teaminteamlist)
+                        if dictkeyformatchups in dictionaryofmatchupscreated or altdictkeyformatchups in dictionaryofmatchupscreated:
+                            pass
+                        else:
+                            newgame = Game(teaminteamlist2,teaminteamlist,None,None)
+                            dictionaryofmatchupscreated[dictkeyformatchups] = newgame
+                            self.MatchupList.append(newgame)
+                            secondnewgame = Game(teaminteamlist,teaminteamlist2,None,None)
+                            dictionaryofmatchupscreated[altdictkeyformatchups] = secondnewgame
+                            self.MatchupList.append(secondnewgame)
+        elif self.ScheduleFormat == "Match Teams to Weeks - not Round Robin":
+            pass
+
+        self.Set_Schedule()
+
+    def Main_Menu(self):
+        main = tk.Tk()   
+        numberofteamslabel = tk.Label(main,text="Number of Teams",background="gray")
+        numberofteamslabel.pack(fill="x")
+        self.NumberofTeamsEntry  = tk.Entry(main)
+        self.NumberofTeamsEntry .pack()
+        numberofweekslabel = tk.Label(main, text="Number of Weeks",background="gray")
+        numberofweekslabel.pack(fill="x")
+        self.NumberofWeeksEntry = tk.Entry(main)
+        self.NumberofWeeksEntry.pack()
+        self.ScheduleFormat = ttk.Combobox(main,values=["Round Robin","Double Round Robin"])
+        self.ScheduleFormat.pack()
+        self.ScheduleFormat.current(0)
+        createschedule = tk.Button(main,text = "Create Schedule",command=self.Create_Schedule,background="gray")
+        createschedule.pack(fill="x")
+        main.mainloop()
+    
+
+NewSeason = Season(None,None,None,None,None,None,None,None,None)
+NewSeason.Main_Menu()
+
