@@ -4,6 +4,112 @@
 
 import random
 
+#matchup class and team class used through function
+
+class Team(object):
+    '''Object which holds the specific team information, mostly the individual's team schedule'''
+    def __init__(self,Number: int,Schedule: list,Position_in_Team_List_Modulus_2: str,Position_in_Even_Team_List_Modulus_2: str, Position_in_Odd_Team_List_Modulus_2):
+        self.Number = Number
+        self.Schedule = Schedule
+        #these variables below are used for later schedule creation. We split the list of teams into sub groups and use their position in these sub groups to identify several aspects of the schedule: whether a team has home/road game or if they even play each other,
+        #depending on the schedule options chosen. 
+        self.Position_in_Team_List_Modulus_2 = Position_in_Team_List_Modulus_2
+        self.Position_in_Even_Team_List_Modulus_2 = Position_in_Even_Team_List_Modulus_2
+        self.Position_in_Odd_Team_List_Modulus_2 = Position_in_Odd_Team_List_Modulus_2
+
+
+    def __repr__(self):
+        return "Team {}".format(self.Number)
+
+    def Testing_Details(self):
+        return "Team {} with Schedule: {} with Position of {} and Position in even list of {} and Position in odd list of {}".format(self.Number,self.Schedule,self.Position_in_Team_List_Modulus_2,self.Position_in_Even_Team_List_Modulus_2,self.Position_in_Odd_Team_List_Modulus_2)
+    
+    def Show_Team_Schedule(self):
+        pass
+
+class Matchup(object):
+    '''Object which holds the Matchup information'''
+    def __init__(self,Team_One: Team, Team_Two: Team,Available_Weeks: list,Week_Matchup_is_Set_For: int):
+        self.Team_One = Team_One
+        self.Team_Two = Team_Two
+        self.Available_Weeks = Available_Weeks
+        self.Week_Matchup_is_Set_For = Week_Matchup_is_Set_For
+
+    def __repr__(self):
+        return "{} vs {} ".format(self.Team_One,self.Team_Two)
+    
+    def Detailed_Information(self):
+        return "Matchup between {} and {} set for Week {}".format(self.Team_One,self.Team_Two,self.Week_Matchup_is_Set_For)
+
+    def Update_Available_Weeks_List(self) -> None:
+        '''clears available week variable, then updates the available weeks list with weeks where both teams are free'''
+        self.Available_Weeks.clear()
+        initial_list_of_available_weeks_placeholder = []
+        for Available_Week_Number_for_First_Team,Available_Week_for_First_Team in enumerate(self.Team_One.Schedule):
+            if Available_Week_for_First_Team == "":
+                initial_list_of_available_weeks_placeholder.append(Available_Week_Number_for_First_Team)
+            else:
+                pass
+        for initial_test_week in initial_list_of_available_weeks_placeholder:
+            if self.Team_Two.Schedule[initial_test_week] == "":
+                self.Available_Weeks.append(initial_test_week)
+    
+    def Pull_Week_to_Set_Matchup_Week(self) -> int:
+        '''function to pull the first week in the list; if there are no weeks, it returns -1. the function's that use this value recognize that if it's a negative number that a different solution will need to be found.'''
+        if len(self.Available_Weeks) > 0:
+            return self.Available_Weeks[0]
+        else:
+            return -1
+
+    def Reset_Week(self) -> None:
+        self.Week_Matchup_is_Set_For = None
+        self.Available_Weeks.clear()
+        self.Update_Available_Weeks_list()
+
+    def Set_Week(self,Week_Num: int,Location_Indication: str) -> None:
+        self.Week_Matchup_is_Set_For = Week_Num
+        if Location_Indication == "OFF":
+            self.Team_One.Schedule[Week_Num] = "Team {}".format(self.Team_Two.Number)
+            self.Team_Two.Schedule[Week_Num] = "Team {}".format(self.Team_One.Number)
+        else:
+            self.Team_One.Schedule[Week_Num] = "@ Team {}".format(self.Team_Two.Number)
+            self.Team_Two.Schedule[Week_Num] = "H Team {}".format(self.Team_One.Number)
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+    def Confirm_Matchup_Week_is_Available_and_Wont_Block_Any_Other_Matchups(self,Unset_Matchup_list,Week_Number):
+        for match in Unset_Matchup_list:
+            if len(match.Available_Weeks) == 1 and Week_Number in match.Available_Weeks:
+                return "Week won't work"
+        return "Week will work"
+    
+    def Set_Matchup(self,Week_Number,Location_Preference):
+        '''Matchup is set to a specific week, and team's schedules are updated to reflect this week'''
+        self.Week_Matchup_is_Set_For = Week_Number
+        if Location_Preference == "OFF":
+            self.Team_One.Schedule[Week_Number] = "vs Team {}".format(self.Team_Two.Number)
+            self.Team_Two.Schedule[Week_Number] = "vs Team {}".format(self.Team_One.Number)
+        elif Location_Preference == "ON":
+            self.Team_One.Schedule[Week_Number] = "@ Team {}".format(self.Team_Two.Number)
+            self.Team_Two.Schedule[Week_Number] = "H Team {}".format(self.Team_One.Number)
+        
+
+
+        
+
+
+
+
 #input variables listed below; will be updated in function
 number_of_teams = 0
 number_of_weeks = 0
@@ -11,15 +117,17 @@ schedule_format = None
 location_preference = None
 options_preference = None
 
-print("Welcome to the Sports Schedule Creator. You will be asked a series of questions.\nThen the algorithm will create a schedule based on your preferences.")
+print("Welcome to the Sports Schedule Creator. You will be asked a series of questions.\nThen the algorithm will create a schedule based on your preferences.\n")
 
 while options_preference == None:
-    options_preference = input("You will first be asked to pick a scheduling format. Do you want to see the options for the scheduling format?\nPlease type Y or N.")
+    options_preference = input("You will first be asked to pick a scheduling format. Do you want to see the options for the scheduling format?\nPlease type Y or N.\n")
     try:
+        options_preference = options_preference.upper()
         if options_preference == "Y":
             print("Round Robin: a Round Robin schedule is a schedule format where every team plays every other team in the league once.\nExamples include many college sports football conferences such as the Ivy League")
             print("Double Round Robin: just like a Round Robin schedule only every team plays every other team twice.\nTypically once at home and once on the road.Examples of this are the Premier League and Big East Men's Basketball.")
             print("Divisions: the teams are split into two divisions.\nEvery team plays each other team in it's division, and then a number of teams in the other division.\nExamples include the NFL, the Big Ten/SEC/ACC/Pac-12 conference's college football schedules (before 2024)")
+            continue
         elif options_preference == "N":
             continue
         else:
@@ -28,12 +136,12 @@ while options_preference == None:
     except ValueError:
         #input caused an error
         print("Do you want to see the options for the scheduling format?\nPlease type Y or N")
-        continue
+
 
 
 
 while schedule_format == None:
-    schedule_format = input("Please Select a Schedule Format by Typing the Number Next to you Option: \n1.Round Robin - Every team plays each other team one time. \n2.Double Round Robin - Each team plays each other two times, once at Home and once Away. \n3.Divisions: breaks teams into two divisions and builds a schedule. ")
+    schedule_format = input("Please Select a Schedule Format by Typing the Number Next to you Option: \n1.Round Robin - Every team plays each other team one time. \n2.Double Round Robin - Each team plays each other two times, once at Home and once Away. \n3.Divisions: breaks teams into two divisions and builds a schedule.\n")
     try:
         schedule_format = int(schedule_format)
         if schedule_format == 1:
@@ -53,37 +161,38 @@ while schedule_format == None:
         print("The value you have typed in is invalid")
         continue
 while number_of_teams == 0:
-    number_of_teams = input("How many teams are in your league? \nNote that there must be between 2 and 32 teams.")
+    number_of_teams = input("How many teams are in your league? \nNote that there must be between 2 and 32 teams.\n")
     try:
         number_of_teams = int(number_of_teams)
         if number_of_teams < 2:
             #failed to set league with more than 2 teams - reset and try again
-            print("Please set the number of teams higher than 1")
+            print("Please set the number of teams higher than 1\n")
             number_of_teams = 0
         elif number_of_teams > 32:
-            print("Please set the number of teams lower than 33")
+            print("Please set the number of teams lower than 33\n")
             number_of_teams = 0
     except ValueError:
         #input entry was something other than a number over 1 - reset and try again
         number_of_teams = 0
-        print("The value you have entered is invalid")
+        print("The value you have entered is invalid\n")
         continue
 while number_of_weeks == 0:
-    number_of_weeks = input("How many weeks are in your season? \nNote that there must be at least 1 week, the response must be an integer, and for certain options there is a minimum number of weeks.\nFor example, the minimum number of weeks for a round robin schedule is the # of teams - 1.\nIf you put in a smaller number the algorithm may override the number to fully create the schedule.")
+    number_of_weeks = input("How many weeks are in your season? \nNote that there must be at least 1 week, the response must be an integer, and for certain options there is a minimum number of weeks.\nFor example, the minimum number of weeks for a round robin schedule is the # of teams - 1.\nIf you put in a smaller number the algorithm may override the number to fully create the schedule.\n")
     try:
         number_of_weeks = int(number_of_weeks)
         if number_of_weeks < 1:
             #failed to set league with more than 1 week - reset and try again
-            print("Please set the number of weeks higher than 0")
+            print("Please set the number of weeks higher than 0\n")
             number_of_weeks = 0
     except ValueError:
         #input entry was something other than a number over 0 - reset and try again
         number_of_week = 0
-        print("The value you have entered is invalid")
+        print("The value you have entered is invalid\n")
         continue
 while location_preference == None:
-    location_preference = input("Does the game location matter?\nPlease type Y or N. \nIf you indicate Y, then the schedule will show @ for away games, and will be blank for home games.")
+    location_preference = input("Does the game location matter?\nPlease type Y or N. \nIf you indicate Y, then the schedule will show @ for away games, and will be blank for home games.\n")
     try:
+        location_preference= location_preference.upper()
         location_preference = str(location_preference)
         if location_preference == "Y":
             location_preference = "ON"
@@ -91,23 +200,23 @@ while location_preference == None:
             location_preference = "OFF"
         else:
             #user did not type Y or N
-            print("Please type Y or N to indicate whether you want the location for each game identified")
+            print("Please type Y or N to indicate whether you want the location for each game identified\n")
             location_preference = None
             continue
     except ValueError:
         #answer was not a Y or N
-        print("Please type Y if the games' location matters, and N if it does not")
+        print("Please type Y if the games' location matters, and N if it does not\n")
         continue
 
 #update schedule format to have the minimum number of weeks if necessary
 if schedule_format == "Round Robin":
     if number_of_weeks < number_of_teams - 1:
         number_of_weeks = number_of_teams - 1
-        print("NOTE - due to options selected, to accomodate the schedule, the number of weeks was updated to {}".format(number_of_weeks))
+        print("NOTE - due to options selected, to accomodate the schedule, the number of weeks was updated to {}\n".format(number_of_weeks))
 elif schedule_format == "Double Round Robin":
     if number_of_weeks < (number_of_teams - 1)*2:
         number_of_weeks = (number_of_teams - 1)*2
-        print("NOTE - due to options selected, to accomodate the schedule, the number of weeks was updated to {}".format(number_of_weeks))
+        print("NOTE - due to options selected, to accomodate the schedule, the number of weeks was updated to {}\n".format(number_of_weeks))
 elif schedule_format == "Divisions":
     #number of games is at least the number of teams in the division - 1, then + 1 to include at least one team from another division
     #sometimes there is an uneven number of teams - for example, 9 teams in the league would mean 4 teams in one division and 5 in the other. 
@@ -115,14 +224,14 @@ elif schedule_format == "Divisions":
     number_of_teams_in_division_two = number_of_teams  - number_of_teams_in_division_one
     if number_of_weeks < max(number_of_teams_in_division_one,number_of_teams_in_division_two) + 1:
         number_of_weeks = max(number_of_teams_in_division_one,number_of_teams_in_division_two) + 1
-        print("NOTE - due to options selected, to accomodate the schedule, the number of weeks was updated to {}".format(number_of_weeks))
+        print("NOTE - due to options selected, to accomodate the schedule, the number of weeks was updated to {}\n".format(number_of_weeks))
 
 
 
-print("The Number of Teams is: ",number_of_teams)
-print("The Number of Weeks in the Season is: ", number_of_weeks)
-print("The Schedule Option you have chosen is: ", schedule_format)
-print("The Game Location Option is turned ", location_preference)
+print("The Number of Teams is: ",number_of_teams,"\n")
+print("The Number of Weeks in the Season is: ", number_of_weeks,"\n")
+print("The Schedule Option you have chosen is: ", schedule_format,"\n")
+print("The Game Location Option is turned ", location_preference,"\n")
 
 #create variables using inputs. variable definitions below:
 #league_season is the variable that holds all of the team schedules. 0 indexed as all python lists are. 
@@ -130,80 +239,85 @@ print("The Game Location Option is turned ", location_preference)
 league_season = [[""]*number_of_weeks for _ in range(number_of_teams)]
 league_season_by_Week = [[] for _ in range(number_of_weeks)]
 gamelist = []
+set_matchups = []
+teams_in_league = []
+tms_with_even_index = [even_index for even_index in range(number_of_teams) if even_index % 2 == 0]
+tms_with_odd_index = [odd_index for odd_index in range(number_of_teams) if odd_index % 2 == 1]
 
+
+
+#create each team, with the index number as it's name, and add to a list of teams
+for creating_new_team in range(0,number_of_teams):
+    #create the team objects. using the index position for the name, as well as other calculations used later in the function.
+    position_in_even_list,position_in_odd_list = None,None
+    if creating_new_team in tms_with_even_index:
+        position_in_even_list = "EVEN" if tms_with_even_index.index(creating_new_team) % 2 == 0 else "ODD"
+        position_in_odd_list = None
+    elif creating_new_team in tms_with_odd_index:
+        position_in_even_list = None
+        position_in_odd_list = "EVEN" if tms_with_odd_index.index(creating_new_team) % 2 == 0 else "ODD"
+    new_team = Team(creating_new_team,[""*number_of_weeks for _ in range(number_of_weeks)],"EVEN" if creating_new_team % 2 == 0 else "ODD",position_in_even_list,position_in_odd_list)
+    teams_in_league.append(new_team)
+
+
+print(teams_in_league)
 #round robin function is used not just in the round robin format but also for other formats where smaller divisions/pods of teams play each other once.
-def Round_Robin(team_number_start,team_number_end):
-    tms_with_even_index = [z for z in range(team_number_start,team_number_end) if z % 2 == 0]
-    tms_with_odd_index = [a for a in range(team_number_start,team_number_end) if a % 2 == 1]
-    for x_gm in range(team_number_start,team_number_end):
-        for i in range(x_gm + 1, team_number_end):
-            gm = None
-            if x_gm in tms_with_even_index and i in tms_with_even_index:
-                i_modulus_index = tms_with_even_index.index(i) % 2
-                if i_modulus_index != tms_with_even_index.index(x_gm) % 2:
-                    gm = [(i, x_gm),[w for w in range(number_of_weeks)]]
+def Round_Robin(league):
+    print("Round Robin was selected")
+    #I provide a more detailed description below, but in basic terms all we do is create a pattern and identify where the teams fit 
+    #on that pattern - and then create the matchups. #this assumes that the home location is turned on, and still works
+    #even if it is turned off (you'll see references to home/away games listed, but they are only relevant if that setting is turned on).
+
+    #loop through each team, and then a second loop for every team after that team; this creates the matchup objects used later
+    #by splitting the list of teams by even/odd index location in the team_number_range, we can divide the teams
+    #into two groups. We then can identify whether the first team is the home team or away team based on the following logic:
+        #for team based on it's index (let's call this team A for example)
+            #for every remaining team (let's call this one team B)
+                #if team A and B both have even indexes, then we find both team's even/odd index within the even index.
+                    #if both are even again, then Team B is home; otherwise team A is the home team. 
+                #if both teams have odd indexes, we invert from the first scenario
+                #if first team has an odd index, and second team has an even index, we then identify their second index on their respective even/odd lists
+                    #if they are different, then team B hosts; otherwise team A
+                # if the opposite of above - team A is even index, team B is an odd index - then vice versa to above. 
+
+    for initial_team_to_create_matchups_for in league[:-1]:
+        for following_team_to_create_matchups_for in league[league.index(initial_team_to_create_matchups_for) + 1:]:
+            new_matchup = None
+            if initial_team_to_create_matchups_for.Position_in_Team_List_Modulus_2 == "EVEN" and following_team_to_create_matchups_for.Position_in_Team_List_Modulus_2 == "EVEN":
+                if following_team_to_create_matchups_for.Position_in_Even_Team_List_Modulus_2 != initial_team_to_create_matchups_for.Position_in_Even_Team_List_Modulus_2:
+                    new_matchup = Matchup(following_team_to_create_matchups_for,initial_team_to_create_matchups_for,[w for w in range(number_of_weeks)],None)
                 else:
-                    gm = [(x_gm,i),[w for w in range(number_of_weeks)]]
-            elif x_gm in tms_with_odd_index and i in tms_with_odd_index:
-                i_modulus_index = tms_with_odd_index.index(i) % 2
-                if i_modulus_index != tms_with_odd_index.index(x_gm) % 2:
-                    gm = [(i, x_gm),[w for w in range(number_of_weeks)]]
+                    new_matchup = Matchup(initial_team_to_create_matchups_for,following_team_to_create_matchups_for,[w for w in range(number_of_weeks)],None)
+            elif initial_team_to_create_matchups_for.Position_in_Team_List_Modulus_2 == "ODD" and following_team_to_create_matchups_for.Position_in_Team_List_Modulus_2 == "ODD":
+                if following_team_to_create_matchups_for.Position_in_Odd_Team_List_Modulus_2 != initial_team_to_create_matchups_for.Position_in_Odd_Team_List_Modulus_2:
+                    new_matchup = Matchup(following_team_to_create_matchups_for,initial_team_to_create_matchups_for,[w for w in range(number_of_weeks)],None)
                 else:
-                    gm = [(x_gm,i),[w for w in range(number_of_weeks)]]
-            elif x_gm in tms_with_even_index and i in tms_with_odd_index:
-                if tms_with_odd_index.index(i) % 2 != tms_with_even_index.index(x_gm) % 2:
-                    gm = [(i, x_gm),[w for w in range(number_of_weeks)]]
+                    new_matchup = Matchup(initial_team_to_create_matchups_for,following_team_to_create_matchups_for,[w for w in range(number_of_weeks)],None)
+            elif initial_team_to_create_matchups_for.Position_in_Team_List_Modulus_2 == "EVEN" and following_team_to_create_matchups_for.Position_in_Team_List_Modulus_2 == "ODD":
+                if following_team_to_create_matchups_for.Position_in_Odd_Team_List_Modulus_2 != initial_team_to_create_matchups_for.Position_in_Even_Team_List_Modulus_2:
+                    new_matchup = Matchup(following_team_to_create_matchups_for,initial_team_to_create_matchups_for,[w for w in range(number_of_weeks)],None)
                 else:
-                    gm = [(x_gm,i),[w for w in range(number_of_weeks)]]
-            elif x_gm in tms_with_odd_index and i in tms_with_even_index:
-                if tms_with_even_index.index(i) % 2 != tms_with_odd_index.index(x_gm) % 2:
-                    gm = [(x_gm,i),[w for w in range(number_of_weeks)]]
+                    new_matchup = Matchup(initial_team_to_create_matchups_for,following_team_to_create_matchups_for,[w for w in range(number_of_weeks)],None)
+            elif initial_team_to_create_matchups_for.Position_in_Team_List_Modulus_2 == "ODD" and following_team_to_create_matchups_for.Position_in_Team_List_Modulus_2 == "EVEN":
+                if following_team_to_create_matchups_for.Position_in_Even_Team_List_Modulus_2 != initial_team_to_create_matchups_for.Position_in_Odd_Team_List_Modulus_2:
+                    new_matchup = Matchup(initial_team_to_create_matchups_for,following_team_to_create_matchups_for,[w for w in range(number_of_weeks)],None)
                 else:
-                    gm = [(i, x_gm),[w for w in range(number_of_weeks)]]
-            
-            gamelist.append(gm)
+                    new_matchup = Matchup(following_team_to_create_matchups_for,initial_team_to_create_matchups_for,[w for w in range(number_of_weeks)],None)
+            gamelist.append(new_matchup)
+            new_matchup.Update_Available_Weeks_List()
 
 
-
-#create tuples for each matchup - matchup = ((#1, #2),[weeks available]). uses schedule format to identify and create matchups that correspond to format.
+#create all necessary matchup objects used throughout larger function.
 if schedule_format == "Round Robin":
-    Round_Robin(0,number_of_teams)
-    # tms_with_even_index = [z for z in range(number_of_teams) if z % 2 == 0]
-    # tms_with_odd_index = [a for a in range(number_of_teams) if a % 2 == 1]
-    # for x_gm in range(number_of_teams):
-    #     for i in range(x_gm + 1, number_of_teams):
-    #         gm = None
-    #         if x_gm in tms_with_even_index and i in tms_with_even_index:
-    #             i_modulus_index = tms_with_even_index.index(i) % 2
-    #             if i_modulus_index != tms_with_even_index.index(x_gm) % 2:
-    #                 gm = [(i, x_gm),[w for w in range(number_of_weeks)]]
-    #             else:
-    #                 gm = [(x_gm,i),[w for w in range(number_of_weeks)]]
-    #         elif x_gm in tms_with_odd_index and i in tms_with_odd_index:
-    #             i_modulus_index = tms_with_odd_index.index(i) % 2
-    #             if i_modulus_index != tms_with_odd_index.index(x_gm) % 2:
-    #                 gm = [(i, x_gm),[w for w in range(number_of_weeks)]]
-    #             else:
-    #                 gm = [(x_gm,i),[w for w in range(number_of_weeks)]]
-    #         elif x_gm in tms_with_even_index and i in tms_with_odd_index:
-    #             if tms_with_odd_index.index(i) % 2 != tms_with_even_index.index(x_gm) % 2:
-    #                 gm = [(i, x_gm),[w for w in range(number_of_weeks)]]
-    #             else:
-    #                 gm = [(x_gm,i),[w for w in range(number_of_weeks)]]
-    #         elif x_gm in tms_with_odd_index and i in tms_with_even_index:
-    #             if tms_with_even_index.index(i) % 2 != tms_with_odd_index.index(x_gm) % 2:
-    #                 gm = [(x_gm,i),[w for w in range(number_of_weeks)]]
-    #             else:
-    #                 gm = [(i, x_gm),[w for w in range(number_of_weeks)]]
-            
-    #         gamelist.append(gm)
+    Round_Robin(teams_in_league)
+
             
 
 elif schedule_format == "Double Round Robin":
     for x_gm in range(number_of_teams):
         for i in range(x_gm + 1, number_of_teams):
-            gm_1 = [(i, x_gm),[w for w in range(number_of_weeks)]]
-            gm_2 = [(x_gm,i),[w for w in range(number_of_weeks)]]
+            gm_1 = [(i, x_gm),[w for w in range(number_of_weeks)],None]
+            gm_2 = [(x_gm,i),[w for w in range(number_of_weeks)],None]
             gamelist.append(gm_1)
             gamelist.append(gm_1)
 
@@ -215,191 +329,23 @@ elif schedule_format == "Divisions":
 
 
 
-
-
-
-    
-
-
-
-
 #now that we have the teams and matchups created, now we create the actual schedule. 
 #shuffle the list of games using random module
 random.shuffle(gamelist)
 
 
-#series of functions used during this process. each function is set to do a single action as there may be backtracking. 
-# print(m)       access matchup set
-# print(m[0])    access teams in matchup
-# print(m[0][0])   access team number
-# print(m[1])      access available weeks for matchup
 
-#functions for matchups. 
-def Pull_Week(m,ind):
-    '''function to pull an initial week for the matchup to try and confirm the week can fit'''
-    if len(m[1]) == 0:
-        return "Problem"
+for Individual_Game in gamelist:
+    print(Individual_Game,Individual_Game.Available_Weeks)
+    Possible_Week = Individual_Game.Pull_Week_to_Set_Matchup_Week()
+    if Possible_Week > -1:
+        Individual_Game.Set_Week(Possible_Week,location_preference)
+        for Every_Other_Game in gamelist:
+            Every_Other_Game.Update_Available_Weeks_List()
     else:
-        if len(m[1]) == ind:
-            return "Unable_to_Match"
-        else:
-            return m[1][ind]
-    
-def Identify_Possible_Weeks(m):
-    '''function to identify weeks'''
-    print("identify possible weeks")
-    #function assumes empty list, which we then populate with available weeks
-    for w in range(number_of_weeks):
-        m[1].append(w)
-    #remove week if either team is already playing a game
-    print(m[1])
-    print("available weeks")
-    for tm_1_num,tm_1_wk in enumerate(league_season[m[0][0]]):
-        if tm_1_wk != "":
-            m[1].remove(tm_1_num)
-    for tm_2_num,tm_2_wk in enumerate(league_season[m[0][1]]):
-        if tm_2_wk != "":
-            m[1].remove(tm_2_num)
-    print(m[1])
+        print("Unable to set up matchup: {}".format(Individual_Game))
+    print(Individual_Game.Detailed_Information())
 
-    
-    
-
-def Reset_Entire_Process():
-    '''function that resets the entire process'''
-    pass
-
-def Reset_Matchup_With_One_Week_Removed(m,wk_num):
-    '''function to reset a prior week'''
-    league_season[m[0][0]][wk_num] = ""
-    league_season[m[0][1]][wk_num] = ""
-    m[1].clear()
-    Identify_Possible_Weeks(m)
-    m[1].remove(wk_num)
-
-  
-
-def Remove_Future_Week_From_Teams_Future_Games(m,wk_num):
-    '''remove week from any future game for team'''
-    print("removing week from future matches: ")
-    for y in gamelist:
-        #if team A or team B from matchup is in the upcoming matchup - remove the week from possible weeks.
-        teams_in_matchup = [m[0][0],m[0][1]]
-        if y[0][0] in teams_in_matchup:
-            if wk_num in y[1]:
-                y[1].remove(wk_num)
-        if y[0][1] in teams_in_matchup:
-            if wk_num in y[1]:
-                y[1].remove(wk_num)
-        if len(y[1]) == 0:
-            #issue - a future game cannot set any games. 
-            print(m," matchup has caused a future matchup: ",y," to be unable to be set")
-        print(y)
-
-def Check_Future_Matchup_Availability(m,wk_num):
-    if len(gamelist) == 0:
-        return "Available"
-    else:
-        for x in gamelist:
-            if m[0][0] in x[0] or m[0][1] in x[0]:
-                if wk_num in x[1]:
-                    #more than one week available therefore still okay
-                    if len(x[1]) > 1:
-                        pass
-                    #only one week available and only week in matchup.
-                    else:
-                        print(wk_num, "is not available as this week is in", x, " available weeks.")
-                        return "Not Available"
-    return "Available"
-
-
-
-
-#function to set the matchup once confirmed
-def Set_Matchup_Week(m,week):
-    if location_preference == "ON":
-        league_season[m[0][0]][week] = "@"+str(m[0][1])
-        league_season[m[0][1]][week] = str(m[0][0])
-        league_season_by_Week[week].append(m[0])
-    else:
-        league_season[m[0][0]][week] = str(m[0][1])
-        league_season[m[0][1]][week] = str(m[0][0])
-        league_season_by_Week[week].append(m[0])
-    print("matchup set:",m, week)
-
-
-
-    
-#function to confirm if matchup can be set in that specific week
-def Confirm_if_Matchup_Can_Be_Set(m,week):
-    #index of matchup in game list
-    matchup_index = gamelist.index(m)
-    #if matchup is last game in list, then it is okay to set up - no conflicts
-    if m == gamelist[-1]:
-        return True
-    #if matchup is NOT the last game in the matchup list, then make sure that by setting this game we aren't causing a future matchup to be unable to be set. 
-    else:
-        for x in gamelist[matchup_index + 1:]:
-            print(x)
-            teams_in_matchup = [x[0][0],x[0][1]]
-            if m[0][0] in teams_in_matchup or m[0][1] in teams_in_matchup:
-                print("either team in list")
-                print(x[1])
-
-
-            
-            if (gamelist[x[0][0]] == m[0][0] or gamelist[x[0][0]] == m[0][1]) or (gamelist[x[0][1]] == m[0][0] or gamelist[x[0][1]] == m[0][1]):
-                if len(gamelist[x][1]) == 1 and week in gamelist[x][1]:
-                    return False
-        return True
-
-def Game_Setup(x):
-    '''overall function to set up the game'''
-    week_index_number = 0
-    #identify a potential week
-    week_number = Pull_Week(x,week_index_number)
-    #identify if picking this week messes up any other future week
-    week_availability = "Not Available"
-    while week_availability == "Not Available":
-        week_availability = Check_Future_Matchup_Availability(x,week_number)
-        if week_availability == "Not Available":
-            week_index_number += 1
-            week_number = Pull_Week(x,week_index_number)
-            if week_number == "Unable_to_Match":
-                print(x,"unable to find week to match")
-                break
-    
-    if week_number == "Problem":
-        if gamelist.index(x) == 0:
-            print("unable to set up week")
-        else:
-            pass
-    else:
-        #first test passed = game matchup can be set on a week.
-        Set_Matchup_Week(x,week_number)
-        Remove_Future_Week_From_Teams_Future_Games(x,week_number)
-
-set_matchups = []
-all_matchups_set = "N"
-while all_matchups_set == "N":
-    Game_Setup(gamelist.pop())
-    if len(gamelist) == 0:
-        all_matchups_set = "Y"
-    else:
-        gamelist = sorted(gamelist, key = lambda a:len(a[1]), reverse = True)
-        print(gamelist)
-
-print("Here is the resulting season. You can copy/paste the data into any spreadsheet software that you need. First, presented by team")
-for z in league_season:
-    #print each team's season separately.
-    print("Team ",league_season.index(z))
-    for x,week in enumerate(z):
-        print("Week ",x,": Team ",week)
-    print("\n")
-print("Here is the resulting schedule on a week by week basis")
-for aa in league_season_by_Week:
-    print("Week ",league_season_by_Week.index(aa))
-    print(aa)
 
 
 
